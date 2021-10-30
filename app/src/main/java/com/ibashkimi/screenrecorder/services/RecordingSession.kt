@@ -4,14 +4,16 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
+import android.widget.Toast
 import com.ibashkimi.screenrecorder.data.DataManager
+import java.io.File
 
 class RecordingSession(
     val context: Context,
-    val options: Options,
-    private val dataManager: DataManager
 ) {
 
     private var recorder: Recorder? = null
@@ -32,7 +34,7 @@ class RecordingSession(
                 val result =
                     intent.getIntExtra(RecorderService.RECORDER_INTENT_RESULT, Activity.RESULT_OK)
                 val newRecorder = Recorder(context)
-                if (newRecorder.start(result, intentData, options)) {
+                if (newRecorder.start(result, intentData)) {
                     startTime = System.currentTimeMillis()
                     state = RecorderState.State.RECORDING
                     recorder = newRecorder
@@ -48,37 +50,6 @@ class RecordingSession(
         }
     }
 
-    fun pause(): Boolean {
-        return recorder?.let {
-            when (state) {
-                RecorderState.State.RECORDING -> {
-                    it.pause()
-                    //calculate total elapsed time until pause
-                    elapsedTime += System.currentTimeMillis() - startTime
-                    state = RecorderState.State.PAUSED
-                    true
-                }
-                RecorderState.State.STOPPED -> false
-                RecorderState.State.PAUSED -> true
-            }
-        } ?: false
-    }
-
-    fun resume(): Boolean {
-        return recorder?.let {
-            return when (state) {
-                RecorderState.State.PAUSED -> {
-                    it.resume()
-                    //Reset startTime to current time again
-                    startTime = System.currentTimeMillis()
-                    state = RecorderState.State.RECORDING
-                    true
-                }
-                RecorderState.State.RECORDING -> true
-                RecorderState.State.STOPPED -> false
-            }
-        } ?: false
-    }
 
     fun stop(): Boolean {
         recorder?.let {
@@ -92,7 +63,8 @@ class RecordingSession(
                         values.put(MediaStore.Video.Media.IS_PENDING, 0)
                     }
 
-                    dataManager.update(options.output.uri.uri, values)
+                    context.contentResolver.update(Uri.fromFile(context.externalCacheDir), values, null, null)
+                    //dataManager.update(options.output.uri.uri, values)
                 }
             }
         }
@@ -100,5 +72,27 @@ class RecordingSession(
         recorder = null
         state = RecorderState.State.STOPPED
         return true
+    }
+
+    private fun getFilePath(): String? {
+        val directory: String =
+            context.externalCacheDir.toString() + File.separator + "Recordings"
+        if (Environment.MEDIA_MOUNTED != Environment.getExternalStorageState()) {
+            Toast.makeText(context, "Failed to get External Storage", Toast.LENGTH_SHORT).show()
+            return null
+        }
+        val folder = File(directory)
+        var success = true
+        if (!folder.exists()) {
+            success = folder.mkdir()
+        }
+        val filePath: String = if (success) {
+            val videoName = "capture_video_cache.mp4"
+            directory + File.separator + videoName
+        } else {
+            Toast.makeText(context, "Failed to create Recordings directory", Toast.LENGTH_SHORT).show()
+            return null
+        }
+        return filePath
     }
 }

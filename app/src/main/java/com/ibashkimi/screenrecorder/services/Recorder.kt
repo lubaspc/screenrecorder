@@ -23,12 +23,16 @@ import android.hardware.display.VirtualDisplay
 import android.media.MediaRecorder
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
 import java.io.IOException
 
 
 class Recorder(private val context: Context) {
+    private val DISPLAY_WIDTH: Int = 480
+    private val DISPLAY_HEIGHT: Int = 640
     var isRecording: Boolean = false
 
     private var mediaRecorder: MediaRecorder? = null
@@ -36,12 +40,12 @@ class Recorder(private val context: Context) {
     private var virtualDisplay: VirtualDisplay? = null
     private var mediaProjectionCallback: MediaProjectionCallback? = null
 
-    fun start(result: Int, data: Intent, options: Options): Boolean {
+    fun start(result: Int, data: Intent): Boolean {
         if (isRecording) {
             throw IllegalStateException("start called but Recorder is already recording.")
         }
         val newMediaRecorder = MediaRecorder()
-        if (!newMediaRecorder.init(options)) {
+        if (!newMediaRecorder.init()) {
             isRecording = false
             return false
         }
@@ -57,9 +61,9 @@ class Recorder(private val context: Context) {
             registerCallback(mediaProjectionCallback, null)
             virtualDisplay = createVirtualDisplay(
                 "ScreenRecorder",
-                options.video.resolution.width,
-                options.video.resolution.height,
-                options.video.virtualDisplayDpi,
+                DISPLAY_WIDTH,
+                DISPLAY_HEIGHT,
+                1080,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 newMediaRecorder.surface,
                 null,
@@ -100,29 +104,21 @@ class Recorder(private val context: Context) {
         }
     }
 
-    private fun MediaRecorder.init(options: Options): Boolean {
+    private fun MediaRecorder.init(): Boolean {
         val fileDescriptor = context.contentResolver
-            .openFileDescriptor(options.output.uri.uri, "w")?.fileDescriptor ?: return false
+            .openFileDescriptor(Uri.fromFile(context.externalCacheDir), "w")?.fileDescriptor ?: return false
 
         try {
-            setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFile(fileDescriptor)
-            when (options.audio) {
-                is AudioOptions.RecordAudio -> {
-                    setAudioSource(options.audio.source)
-                    setAudioEncodingBitRate(options.audio.bitRate)
-                    setAudioSamplingRate(options.audio.samplingRate)
-                }
-            }
-            setOutputFormat(options.output.format)
-            setVideoSize(options.video.resolution.width, options.video.resolution.height)
-            setVideoEncoder(options.video.encoder)
-            if (options.audio is AudioOptions.RecordAudio) {
-                setAudioEncoder(options.audio.encoder)
-            }
-            setVideoEncodingBitRate(options.video.bitrate)
-            setVideoFrameRate(options.video.fps)
-
+            //setAudioSource(MediaRecorder.AudioSource.MIC);
+            setVideoSource(MediaRecorder.VideoSource.SURFACE)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            //setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            //setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            setVideoEncodingBitRate(512 * 1000)
+            setVideoFrameRate(30)
+            setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT)
             prepare()
             return true
         } catch (e: IOException) {
