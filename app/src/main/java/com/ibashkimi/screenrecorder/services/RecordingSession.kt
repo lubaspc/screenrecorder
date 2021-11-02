@@ -63,7 +63,8 @@ class RecordingSession(
                         values.put(MediaStore.Video.Media.IS_PENDING, 0)
                     }
 
-                    context.contentResolver.update(Uri.fromFile(context.externalCacheDir), values, null, null)
+                    //context.contentResolver.update(Uri.fromFile(context.externalCacheDir), values, null, null)
+                    //val file: File = File(context.filesDir, "video.mp4")
                     //dataManager.update(options.output.uri.uri, values)
                 }
             }
