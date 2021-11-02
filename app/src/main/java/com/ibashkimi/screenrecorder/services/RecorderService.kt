@@ -16,28 +16,18 @@
 
 package com.ibashkimi.screenrecorder.services
 
-import android.app.Notification
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.net.Uri
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.ibashkimi.screenrecorder.FINISH_NOTIFICATION_CHANNEL_ID
-import com.ibashkimi.screenrecorder.MainActivity
 import com.ibashkimi.screenrecorder.R
 import com.ibashkimi.screenrecorder.RECORDING_NOTIFICATION_CHANNEL_ID
-import com.ibashkimi.screenrecorder.data.DataManager
-import com.ibashkimi.screenrecorder.data.MediaStoreDataSource
-import com.ibashkimi.screenrecorder.data.SAFDataSource
 
 
 class RecorderService : Service() {

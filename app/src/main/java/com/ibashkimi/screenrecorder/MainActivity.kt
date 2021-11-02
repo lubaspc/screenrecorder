@@ -22,7 +22,6 @@ import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.ibashkimi.screenrecorder.services.RecorderService
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -34,12 +33,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         createNotificationChannels()
         setContentView(R.layout.activity_main)
-
-        findViewById<FloatingActionButton>(R.id.fab).apply {
-            setOnClickListener {
-                startRecording()
-            }
-        }
 
         btn_record.setOnClickListener {
             startRecording()
